@@ -1,41 +1,51 @@
-# -*- coding: utf-8 -*-
+""" This module is main module for Turkish and English sentiment analysis model training """
 
+import string
 import pandas as pd
 import numpy as np
-import string
 import tensorflow as tf
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from keras.preprocessing.sequence import pad_sequences
 from keras.preprocessing.text import Tokenizer
 from tqdm import tqdm
-from src.sentiment_analysis_tr.models import get_model
-from src.sentiment_analysis_tr.embedding import get_embedding_matrix
-from src.sentiment_analysis_tr.model_constants import get_data_path, lang
+from src.sentiment_analysis.models import get_model
+from src.sentiment_analysis.embedding import get_embedding_matrix
+from src.sentiment_analysis.model_constants import get_data_path
+from src.sentiment_analysis.model_constants import LANG
 tf.config.run_functions_eagerly(True)
 
 
 class SentimentAnalysis:
+    """
+    This class is using for creating embedding matrix and train sentiment analysis model.
+    """
 
     def __init__(self):
         self.dataset = pd.read_csv(get_data_path())
-        if lang == "tr":
+        if LANG == "tr":
             self.total_reviews = self.dataset["Review"].values
             self.sentiment = self.dataset['Rating'].values
         else:
             self.total_reviews = self.dataset["review"].values
             self.sentiment = self.dataset['sentiment'].values
-            self.sentiment = np.array(list(map(lambda x: 1 if x == "positive" else 0, self.sentiment)))
+            self.sentiment = np.array(list(map(lambda x: 1 if x == "positive" else 0,
+                                               self.sentiment)))
 
         self.max_length = max([len(s.split()) for s in self.total_reviews])
         self.review_lines = self.review_lines_create()
         self.word_index, self.review_pad = self.padding()
-        self.num_words = len(self.word_index) + 1
-        self.embedding_matrix = get_embedding_matrix(self.review_lines, self.num_words, self.word_index)
-        self.x_train_pad, self.y_train, self.x_test_pad, self.y_test = self.get_train_test_data()
 
     def review_lines_create(self):
-        if lang == "tr":
+        """
+        In this function, punctuation marks and stopwords are
+        removing after splitting the words in each review.
+        After that each review is adding in a review line list.
+
+        :return:list
+            It returns  List of word list for each splitted reviews
+        """
+        if LANG == "tr":
             stop_words = set(stopwords.words('turkish'))
         else:
             stop_words = set(stopwords.words('english'))
@@ -51,6 +61,12 @@ class SentimentAnalysis:
         return review_lines
 
     def padding(self):
+        """
+        In this function, paddings are adding to each review.
+
+        :return:dict,ndarray
+            It returns  word index and reviews which have paddings
+        """
         tokenizer_obj = Tokenizer()
         tokenizer_obj.fit_on_texts(self.review_lines)
         sequences = tokenizer_obj.texts_to_sequences(self.review_lines)
@@ -59,6 +75,12 @@ class SentimentAnalysis:
         return word_index, review_pad
 
     def get_train_test_data(self):
+        """
+        In this function, train and test data is splitting from whole data which is paddings added
+
+        :return:list, list, list, list
+            It returns  x_train, y_train, x_test, y_test
+        """
         validation_split = 0.2
         index_array = np.arange(self.review_pad.shape[0])
         np.random.shuffle(index_array)
@@ -70,10 +92,19 @@ class SentimentAnalysis:
         return x_train_pad, y_train, x_test_pad, y_test
 
     def train(self):
-        train_model = get_model(self.num_words, self.max_length, self.embedding_matrix)
+        """
+       In this function, model training for sentiment analysis is doing.
+
+       :return:
+           It returns  trained model.
+       """
+        num_words = len(self.word_index) + 1
+        x_train_pad, y_train, x_test_pad, y_test = self.get_train_test_data()
+        embedding_matrix = get_embedding_matrix(self.review_lines, num_words, self.word_index)
+        train_model = get_model(num_words, self.max_length, embedding_matrix)
         train_model.summary()
-        train_model.fit(self.x_train_pad, self.y_train, batch_size=128, epochs=5, verbose=1,
-                        validation_data=(self.x_test_pad, self.y_test))
+        train_model.fit(x_train_pad, y_train, batch_size=128, epochs=5, verbose=1,
+                        validation_data=(x_test_pad, y_test))
         return train_model
 
 
