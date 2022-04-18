@@ -1,12 +1,15 @@
 """This Module is using for crating training model and adding embedding layer"""
-from keras.models import Sequential
-from keras.layers.core import Dense
-from keras.layers import Bidirectional, Dropout
+import tensorflow as tf
+import tensorflow_hub as hub
+from keras import backend as k
+from keras.models import Sequential, Model
+from keras.layers import Bidirectional, Dropout, Dense, Input, Lambda
 from keras.layers import Conv1D, MaxPooling1D, Flatten
 from keras.layers.embeddings import Embedding
 from keras.initializers.initializers_v2 import Constant
 from metrics import recall, precision, f1_score
 from model_constants import get_embedding_constants, LANG
+from src.sentiment_analysis.embedding import elmo_embedding
 
 
 def cnn_model(train_model):
@@ -24,10 +27,39 @@ def cnn_model(train_model):
     return train_model
 
 
+def get_elmo_model():
+    """
+    This function is creating model with Elmo Embedding Layer
+    :return:
+        It returns training model
+    """
+    sess = tf.compat.v1.Session()
+    k.set_session(sess)
+
+    elmo_model = hub.Module("https://tfhub.dev/google/elmo/2", trainable=True)
+    input_text = Input(shape=(1,), dtype="string", name="Input_Query")
+    embedding = Lambda(elmo_embedding, output_shape=(1024,), name="Elmo_Embedding")(input_text,
+                                                                                    elmo_model)
+    dense_layer = Dense(7200, activation='relu')(embedding)
+    dropout_layer = Dropout(0.5)(dense_layer)
+    dense_layer_2 = Dense(3600, activation='relu')(dropout_layer)
+    dropout_layer_2 = Dropout(0.5)(dense_layer_2)
+    outputs = Dense(2, activation='sigmoid')(dropout_layer_2)
+    model = Model(inputs=[input_text], outputs=outputs, name="tbd")
+    model.compile(loss='binary_crossentropy',
+                  optimizer='adam',
+                  metrics=['accuracy'])
+
+    sess.run(tf.compat.v1.global_variables_initializer())
+    sess.run(tf.compat.v1.tables_initializer())
+
+    return model
+
+
 def get_model(num_words, max_length, embedding_matrix):
     """
     This function is creating model with embedding matrix which is come from word2vec,
-    glove or fasttext
+    glove, fasttext elmo
     :param num_words:int
         Total number of words
     :param max_length:int

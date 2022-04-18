@@ -6,6 +6,7 @@ import numpy as np
 from gensim.models import Word2Vec, FastText
 from tqdm import tqdm
 from model_constants import get_embedding_file, EMBEDDING_MODEL, LANG
+import tensorflow as tf
 
 
 def find_all(path, name):
@@ -142,3 +143,17 @@ def get_embedding_matrix(review_lines, num_words, word_index):
         if embedding_vector is not None:
             embedding_matrix[index] = embedding_vector
     return embedding_matrix
+
+
+def elmo_embedding(layer, elmo_model):
+    """
+    Elmo embedding creation function
+    :param layer:
+        Input layer
+    :param elmo_model:
+        elmo model from tensorflow-hub
+    :return:
+        Returns embedding matrix
+    """
+    return elmo_model(tf.reshape(tf.cast(layer, tf.string), [-1]),
+                      signature="default", as_dict=True)["default"]

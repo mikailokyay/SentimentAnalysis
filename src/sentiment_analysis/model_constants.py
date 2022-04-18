@@ -2,9 +2,9 @@
 from keras.layers import CuDNNLSTM, CuDNNGRU
 
 LANG = "en"
-EMBEDDING_MODEL = "word2vec"
-RNN_LAYER_TYPE = "lstm"
-MODEL_TYPE = "cnn"
+EMBEDDING_MODEL = "fasttext"
+RNN_LAYER_TYPE = "gru"
+MODEL_TYPE = "not_cnn_or_hybrid"
 BIDIRECTIONAL = True
 
 

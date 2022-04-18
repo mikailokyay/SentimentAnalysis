@@ -1,5 +1,6 @@
 """ This module is main module for Turkish and English sentiment analysis model training """
 
+
 import string
 import pandas as pd
 import numpy as np
@@ -9,10 +10,10 @@ from nltk.tokenize import word_tokenize
 from keras.preprocessing.sequence import pad_sequences
 from keras.preprocessing.text import Tokenizer
 from tqdm import tqdm
-from src.sentiment_analysis.models import get_model
+from sklearn.model_selection import train_test_split
+from src.sentiment_analysis.models import get_model, get_elmo_model
 from src.sentiment_analysis.embedding import get_embedding_matrix
-from src.sentiment_analysis.model_constants import get_data_path
-from src.sentiment_analysis.model_constants import LANG
+from src.sentiment_analysis.model_constants import get_data_path, EMBEDDING_MODEL, LANG
 tf.config.run_functions_eagerly(True)
 
 
@@ -31,10 +32,10 @@ class SentimentAnalysis:
             self.sentiment = self.dataset['sentiment'].values
             self.sentiment = np.array(list(map(lambda x: 1 if x == "positive" else 0,
                                                self.sentiment)))
-
-        self.max_length = max([len(s.split()) for s in self.total_reviews])
-        self.review_lines = self.review_lines_create()
-        self.word_index, self.review_pad = self.padding()
+        if EMBEDDING_MODEL != "elmo":
+            self.max_length = max([len(s.split()) for s in self.total_reviews])
+            self.review_lines = self.review_lines_create()
+            self.word_index, self.review_pad = self.padding()
 
     def review_lines_create(self):
         """
@@ -98,13 +99,24 @@ class SentimentAnalysis:
        :return:
            It returns  trained model.
        """
-        num_words = len(self.word_index) + 1
-        x_train_pad, y_train, x_test_pad, y_test = self.get_train_test_data()
-        embedding_matrix = get_embedding_matrix(self.review_lines, num_words, self.word_index)
-        train_model = get_model(num_words, self.max_length, embedding_matrix)
-        train_model.summary()
-        train_model.fit(x_train_pad, y_train, batch_size=128, epochs=5, verbose=1,
-                        validation_data=(x_test_pad, y_test))
+        if EMBEDDING_MODEL == "elmo":
+            x_train, x_test, y_train, y_test = train_test_split(self.total_reviews,
+                                                                pd.get_dummies(self.sentiment).values,
+                                                                test_size=0.2, random_state=0)
+            train_model = get_elmo_model()
+            train_model.fit(np.array(x_train),
+                            np.array(y_train),
+                            epochs=5,
+                            batch_size=64,
+                            validation_data=(x_test, y_test))
+        else:
+            num_words = len(self.word_index) + 1
+            x_train_pad, y_train, x_test_pad, y_test = self.get_train_test_data()
+            embedding_matrix = get_embedding_matrix(self.review_lines, num_words, self.word_index)
+            train_model = get_model(num_words, self.max_length, embedding_matrix)
+            train_model.summary()
+            train_model.fit(x_train_pad, y_train, batch_size=128, epochs=5, verbose=1,
+                            validation_data=(x_test_pad, y_test))
         return train_model
 
 

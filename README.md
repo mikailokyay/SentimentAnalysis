@@ -40,6 +40,7 @@ For GloVe word embeddings, [glove.6B.100d.txt](https://nlp.stanford.edu/data/glo
 | FastText+GRU        | 0.8970   | 0.9356 | 0.8705    | 0.9011   |
 | FastText+LSTM       | 0.8887   | 0.9286 | 0.8613    | 0.8930   |
 | FastText+BiLSTM     | 0.8755   | 0.9051 | 0.8563    | 0.8791   |
+| ElMo                | 0.8571   | 0.8564 | 0.8564    | 0.8371   |
 
 ## Turkish Sentiment Analysis
 ### Hepsiburada Dataset
@@ -77,6 +78,7 @@ For GloVe word embeddings, [vectors.txt](https://drive.google.com/drive/u/0/fold
 | FastText+GRU        | 0.9714   | 0.9942 | 0.9759    | 0.9849   |
 | FastText+LSTM       | 0.9689   | 0.9943 | 0.9734    | 0.9837   |
 | FastText+BiLSTM     | 0.9705   | 0.9912 | 0.9778    | 0.9844   |
+| ElMo                | 0.9452   | 0.9173 | 0.8974    | 0.9072   |
 
 ## Model Constants Arrangement Example
 Model constants can arrange in model_constants.py, model trainings can be carried out by changing the parameters according to the model to be trained.\
@@ -104,6 +106,11 @@ For train English Sentiment Analysis model with Word2Vec and CNN
 LANG = "en"
 EMBEDDING_MODEL = "word2vec"
 MODEL_TYPE = "cnn"
+```
+For train Turkish Sentiment Analysis model with ElMo
+```
+LANG = "tr"
+EMBEDDING_MODEL = "elmo"
 ```
 
 ## References
