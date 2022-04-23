@@ -85,7 +85,7 @@ Model constants can arrange in model_constants.py, model trainings can be carrie
 \
 For train Turkish Sentiment Analysis model with FastText and LSTM
 
-```
+```python
 LANG = "tr"
 EMBEDDING_MODEL = "fasttext"
 RNN_LAYER_TYPE = "lstm"
@@ -94,7 +94,7 @@ BIDIRECTIONAL = False
 ```
 
 For train English Sentiment Analysis model with GloVe and CNN-BiGRU
-```
+```python
 LANG = "en"
 EMBEDDING_MODEL = "glove"
 RNN_LAYER_TYPE = "gru"
@@ -102,13 +102,13 @@ MODEL_TYPE = "hybrid"
 BIDIRECTIONAL = True
 ```
 For train English Sentiment Analysis model with Word2Vec and CNN
-```
+```python
 LANG = "en"
 EMBEDDING_MODEL = "word2vec"
 MODEL_TYPE = "cnn"
 ```
 For train Turkish Sentiment Analysis model with ElMo
-```
+```python
 LANG = "tr"
 EMBEDDING_MODEL = "elmo"
 ```
