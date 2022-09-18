@@ -1,8 +1,8 @@
 """This module is using for creating model constants"""
-from keras.layers import CuDNNLSTM, CuDNNGRU
+from tensorflow.python.keras.layers import CuDNNLSTM, CuDNNGRU
 
 LANG = "en"
-EMBEDDING_MODEL = "fasttext"
+EMBEDDING_MODEL = "elmo"
 RNN_LAYER_TYPE = "gru"
 MODEL_TYPE = "not_cnn_or_hybrid"
 BIDIRECTIONAL = True

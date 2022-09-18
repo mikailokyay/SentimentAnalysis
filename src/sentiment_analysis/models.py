@@ -1,15 +1,14 @@
 """This Module is using for crating training model and adding embedding layer"""
 import tensorflow as tf
-import tensorflow_hub as hub
-from keras import backend as k
-from keras.models import Sequential, Model
-from keras.layers import Bidirectional, Dropout, Dense, Input, Lambda
-from keras.layers import Conv1D, MaxPooling1D, Flatten
-from keras.layers.embeddings import Embedding
-from keras.initializers.initializers_v2 import Constant
+from tensorflow.python.keras.initializers.initializers_v2 import Constant
+from tensorflow.python.keras import backend as k
+from tensorflow.python.keras.models import Sequential
+from tensorflow.python.keras.layers import Dropout, Dense
+from tensorflow.python.keras.layers import Conv1D, MaxPooling1D, Flatten
+from tensorflow.python.keras.layers.embeddings import Embedding
 from metrics import recall, precision, f1_score
 from model_constants import get_embedding_constants, LANG
-from src.sentiment_analysis.embedding import elmo_embedding
+import tensorflow_hub as hub
 
 
 def cnn_model(train_model):
@@ -33,26 +32,17 @@ def get_elmo_model():
     :return:
         It returns training model
     """
-    sess = tf.compat.v1.Session()
-    k.set_session(sess)
-
-    elmo_model = hub.Module("https://tfhub.dev/google/elmo/2", trainable=True)
-    input_text = Input(shape=(1,), dtype="string", name="Input_Query")
-    embedding = Lambda(elmo_embedding, output_shape=(1024,), name="Elmo_Embedding")(input_text,
-                                                                                    elmo_model)
-    dense_layer = Dense(7200, activation='relu')(embedding)
-    dropout_layer = Dropout(0.5)(dense_layer)
-    dense_layer_2 = Dense(3600, activation='relu')(dropout_layer)
-    dropout_layer_2 = Dropout(0.5)(dense_layer_2)
-    outputs = Dense(2, activation='sigmoid')(dropout_layer_2)
-    model = Model(inputs=[input_text], outputs=outputs, name="tbd")
-    model.compile(loss='binary_crossentropy',
-                  optimizer='adam',
-                  metrics=['accuracy'])
-
-    sess.run(tf.compat.v1.global_variables_initializer())
-    sess.run(tf.compat.v1.tables_initializer())
-
+    model = "https://tfhub.dev/google/nnlm-en-dim50/2"
+    hub_layer = hub.KerasLayer(model, input_shape=[], dtype=tf.string, trainable=True)
+    model = tf.keras.Sequential()
+    model.add(hub_layer)
+    model.add(tf.keras.layers.Dense(16, activation='relu'))
+    model.add(Dropout(0.25))
+    model.add(tf.keras.layers.Dense(1))
+    model.compile(optimizer='adam',
+                  loss='binary_crossentropy',
+                  metrics=['acc', recall, precision, f1_score])
+    model.summary()
     return model
 
 
@@ -87,7 +77,7 @@ def get_model(num_words, max_length, embedding_matrix):
         train_model.add(Dropout(0.25))
 
         if embedding_constants["bidirectional"]:
-            train_model.add(Bidirectional(embedding_constants["lstm_gru_type"](128)))
+            train_model.add(tf.keras.layers.Bidirectional(embedding_constants["lstm_gru_type"](128)))
         else:
             train_model.add(embedding_constants["lstm_gru_type"](128))
 
@@ -96,7 +86,7 @@ def get_model(num_words, max_length, embedding_matrix):
 
     else:
         if embedding_constants["bidirectional"]:
-            train_model.add(Bidirectional(embedding_constants["lstm_gru_type"](128)))
+            train_model.add(tf.keras.layers.Bidirectional(embedding_constants["lstm_gru_type"](128)))
         else:
             train_model.add(embedding_constants["lstm_gru_type"](128))
     train_model.add(Dense(1, activation='sigmoid'))

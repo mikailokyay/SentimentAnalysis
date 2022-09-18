@@ -1,20 +1,21 @@
 """ This module is main module for Turkish and English sentiment analysis model training """
 
-
 import string
 import pandas as pd
 import numpy as np
 import tensorflow as tf
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
-from keras.preprocessing.sequence import pad_sequences
-from keras.preprocessing.text import Tokenizer
 from tqdm import tqdm
 from sklearn.model_selection import train_test_split
+
 from src.sentiment_analysis.models import get_model, get_elmo_model
 from src.sentiment_analysis.embedding import get_embedding_matrix
 from src.sentiment_analysis.model_constants import get_data_path, EMBEDDING_MODEL, LANG
-tf.config.run_functions_eagerly(True)
+
+config = tf.compat.v1.ConfigProto()
+config.gpu_options.allocator_type ="BFC"
+config.gpu_options.per_process_gpu_memory_fraction = 0.90
 
 
 class SentimentAnalysis:
@@ -44,7 +45,7 @@ class SentimentAnalysis:
         After that each review is adding in a review line list.
 
         :return:list
-            It returns  List of word list for each splitted reviews
+            It returns  List of word list for each split reviews
         """
         if LANG == "tr":
             stop_words = set(stopwords.words('turkish'))
@@ -68,11 +69,11 @@ class SentimentAnalysis:
         :return:dict,ndarray
             It returns  word index and reviews which have paddings
         """
-        tokenizer_obj = Tokenizer()
+        tokenizer_obj = tf.keras.preprocessing.text.Tokenizer()
         tokenizer_obj.fit_on_texts(self.review_lines)
         sequences = tokenizer_obj.texts_to_sequences(self.review_lines)
         word_index = tokenizer_obj.word_index
-        review_pad = pad_sequences(sequences, maxlen=self.max_length)
+        review_pad = tf.keras.utils.pad_sequences(sequences, maxlen=self.max_length)
         return word_index, review_pad
 
     def get_train_test_data(self):
@@ -107,16 +108,16 @@ class SentimentAnalysis:
             train_model.fit(np.array(x_train),
                             np.array(y_train),
                             epochs=5,
-                            batch_size=64,
-                            validation_data=(x_test, y_test))
+                            batch_size=16,
+                            validation_data=(x_test, y_test),use_multiprocessing=True, workers=8)
         else:
             num_words = len(self.word_index) + 1
             x_train_pad, y_train, x_test_pad, y_test = self.get_train_test_data()
             embedding_matrix = get_embedding_matrix(self.review_lines, num_words, self.word_index)
             train_model = get_model(num_words, self.max_length, embedding_matrix)
             train_model.summary()
-            train_model.fit(x_train_pad, y_train, batch_size=128, epochs=5, verbose=1,
-                            validation_data=(x_test_pad, y_test))
+            train_model.fit(x_train_pad, y_train, batch_size=16, epochs=5, verbose=1,
+                            validation_data=(x_test_pad, y_test), use_multiprocessing=True, workers=8)
         return train_model
 
 

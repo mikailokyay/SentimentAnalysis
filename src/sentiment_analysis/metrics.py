@@ -1,5 +1,5 @@
 """This module is using for getting evaluation metrics"""
-import keras.backend as k
+import tensorflow.python.keras.backend as keras_b
 import tensorflow as tf
 
 
@@ -13,15 +13,15 @@ def f1_score(y_true, y_predict):
     The tensor y_predicted is the data predicted (calculated, output) by your model.
     :return:
     """
-    y_predict = k.round(y_predict)
-    true_positive = k.sum(k.cast(y_true * y_predict, 'float'), axis=0)
-    false_positive = k.sum(k.cast((1 - y_true) * y_predict, 'float'), axis=0)
-    false_negative = k.sum(k.cast(y_true * (1 - y_predict), 'float'), axis=0)
-    precision_score = true_positive / (true_positive + false_positive + k.epsilon())
-    recall_score = true_positive / (true_positive + false_negative + k.epsilon())
-    f1_form = 2 * precision_score * recall_score / (precision_score + recall_score + k.epsilon())
+    y_predict = keras_b.round(y_predict)
+    true_positive = keras_b.sum(keras_b.cast(y_true * y_predict, 'float'), axis=0)
+    false_positive = keras_b.sum(keras_b.cast((1 - y_true) * y_predict, 'float'), axis=0)
+    false_negative = keras_b.sum(keras_b.cast(y_true * (1 - y_predict), 'float'), axis=0)
+    precision_score = true_positive / (true_positive + false_positive + keras_b.epsilon())
+    recall_score = true_positive / (true_positive + false_negative + keras_b.epsilon())
+    f1_form = 2 * precision_score * recall_score / (precision_score + recall_score + keras_b.epsilon())
     f1_result = tf.where(tf.math.is_nan(f1_form), tf.zeros_like(f1_form), f1_form)
-    return k.mean(f1_result)
+    return keras_b.mean(f1_result)
 
 
 def precision(y_true, y_predict):
@@ -34,11 +34,11 @@ def precision(y_true, y_predict):
     The tensor y_predicted is the data predicted (calculated, output) by your model.
     :return:
     """
-    y_predict = k.round(y_predict)
-    true_positive = k.sum(k.cast(y_true * y_predict, 'float'), axis=0)
-    false_positive = k.sum(k.cast((1 - y_true) * y_predict, 'float'), axis=0)
-    precision_score = true_positive / (true_positive + false_positive + k.epsilon())
-    return k.mean(precision_score)
+    y_predict = keras_b.round(y_predict)
+    true_positive = keras_b.sum(keras_b.cast(y_true * y_predict, 'float'), axis=0)
+    false_positive = keras_b.sum(keras_b.cast((1 - y_true) * y_predict, 'float'), axis=0)
+    precision_score = true_positive / (true_positive + false_positive + keras_b.epsilon())
+    return keras_b.mean(precision_score)
 
 
 def recall(y_true, y_predict):
@@ -51,8 +51,8 @@ def recall(y_true, y_predict):
     The tensor y_predicted is the data predicted (calculated, output) by your model.
     :return:
         """
-    y_predict = k.round(y_predict)
-    true_positive = k.sum(k.cast(y_true * y_predict, 'float'), axis=0)
-    false_negative = k.sum(k.cast(y_true * (1 - y_predict), 'float'), axis=0)
-    recall_score = true_positive / (true_positive + false_negative + k.epsilon())
-    return k.mean(recall_score)
+    y_predict = keras_b.round(y_predict)
+    true_positive = keras_b.sum(keras_b.cast(y_true * y_predict, 'float'), axis=0)
+    false_negative = keras_b.sum(keras_b.cast(y_true * (1 - y_predict), 'float'), axis=0)
+    recall_score = true_positive / (true_positive + false_negative + keras_b.epsilon())
+    return keras_b.mean(recall_score)
