@@ -8,7 +8,6 @@ from tqdm import tqdm
 from model_constants import get_embedding_file, EMBEDDING_MODEL, LANG
 
 
-
 def find_all(path, name):
     """
     Check file in directory

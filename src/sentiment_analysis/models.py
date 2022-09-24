@@ -1,7 +1,7 @@
 """This Module is using for crating training model and adding embedding layer"""
 import tensorflow as tf
+from simpletransformers.classification import ClassificationModel, ClassificationArgs
 from tensorflow.python.keras.initializers.initializers_v2 import Constant
-from tensorflow.python.keras import backend as k
 from tensorflow.python.keras.models import Sequential
 from tensorflow.python.keras.layers import Dropout, Dense
 from tensorflow.python.keras.layers import Conv1D, MaxPooling1D, Flatten
@@ -93,3 +93,29 @@ def get_model(num_words, max_length, embedding_matrix):
     train_model.compile(optimizer='adam', loss='binary_crossentropy',
                         metrics=['acc', recall, precision, f1_score])
     return train_model
+
+
+def get_transformer_model(training_model, training_model_name, labels):
+    """
+    This is transformer model training function
+    :param training_model: string
+        transformer model type
+    :param training_model_name: string
+        pretrained model name
+    :param labels: list
+        label list
+    :return: transformer model
+    """
+    model_args = ClassificationArgs()
+    model_args.num_train_epochs = 3
+    model_args.train_batch_size = 16
+    model_args.optimizer = "AdamW"
+    model_args.learning_rate = 1e-4
+    model_args.adam_epsilon = 1e-5
+    model_args.labels_list = labels
+    model_args.overwrite_output_dir = True
+
+    # Define Bert model with Simpletransformers ClassificationModel
+    model = ClassificationModel(training_model, training_model_name, num_labels=len(labels), use_cuda=True,
+                                args=model_args)
+    return model

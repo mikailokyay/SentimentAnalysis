@@ -9,13 +9,15 @@ from nltk.tokenize import word_tokenize
 from tqdm import tqdm
 from sklearn.model_selection import train_test_split
 
-from src.sentiment_analysis.models import get_model, get_elmo_model
+from src.sentiment_analysis.models import get_model, get_elmo_model, get_transformer_model
 from src.sentiment_analysis.embedding import get_embedding_matrix
 from src.sentiment_analysis.model_constants import get_data_path, EMBEDDING_MODEL, LANG
+from sklearn.metrics import accuracy_score
 
-config = tf.compat.v1.ConfigProto()
-config.gpu_options.allocator_type ="BFC"
-config.gpu_options.per_process_gpu_memory_fraction = 0.90
+
+# config = tf.compat.v1.ConfigProto()
+# config.gpu_options.allocator_type ="BFC"
+# config.gpu_options.per_process_gpu_memory_fraction = 0.90
 
 
 class SentimentAnalysis:
@@ -25,14 +27,13 @@ class SentimentAnalysis:
 
     def __init__(self):
         self.dataset = pd.read_csv(get_data_path())
-        if LANG == "tr":
-            self.total_reviews = self.dataset["Review"].values
-            self.sentiment = self.dataset['Rating'].values
-        else:
-            self.total_reviews = self.dataset["review"].values
-            self.sentiment = self.dataset['sentiment'].values
-            self.sentiment = np.array(list(map(lambda x: 1 if x == "positive" else 0,
-                                               self.sentiment)))
+        if LANG == "en":
+            self.dataset["sentiment"] = np.array(list(map(lambda x: 1 if x == "positive" else 0,
+                                               self.dataset["sentiment"])))
+
+        self.total_reviews = self.dataset["Review"].values
+        self.sentiment = self.dataset['Rating'].values
+
         if EMBEDDING_MODEL != "elmo":
             self.max_length = max([len(s.split()) for s in self.total_reviews])
             self.review_lines = self.review_lines_create()
@@ -93,34 +94,41 @@ class SentimentAnalysis:
         y_test = self.sentiment[index_array][-num_validation_samples:]
         return x_train_pad, y_train, x_test_pad, y_test
 
+    @property
     def train(self):
         """
-       In this function, model training for sentiment analysis is doing.
+       In this function, embed_model training for sentiment analysis is doing.
 
        :return:
-           It returns  trained model.
+           It returns  trained embed_model.
        """
         if EMBEDDING_MODEL == "elmo":
             x_train, x_test, y_train, y_test = train_test_split(self.total_reviews,
                                                                 pd.get_dummies(self.sentiment).values,
                                                                 test_size=0.2, random_state=0)
-            train_model = get_elmo_model()
-            train_model.fit(np.array(x_train),
+            embed_model = get_elmo_model()
+            embed_model.fit(np.array(x_train),
                             np.array(y_train),
                             epochs=5,
                             batch_size=16,
-                            validation_data=(x_test, y_test),use_multiprocessing=True, workers=8)
+                            validation_data=(x_test, y_test), use_multiprocessing=True, workers=8)
+        elif EMBEDDING_MODEL == "bert":
+
+            train_df, val_df = train_test_split(self.dataset, test_size=0.2, random_state=0)
+            embed_model = get_transformer_model("bert", "bert-base-uncased", set(self.sentiment))
+            embed_model.train_model(train_df, acc=accuracy_score)
+
         else:
             num_words = len(self.word_index) + 1
             x_train_pad, y_train, x_test_pad, y_test = self.get_train_test_data()
             embedding_matrix = get_embedding_matrix(self.review_lines, num_words, self.word_index)
-            train_model = get_model(num_words, self.max_length, embedding_matrix)
-            train_model.summary()
-            train_model.fit(x_train_pad, y_train, batch_size=16, epochs=5, verbose=1,
-                            validation_data=(x_test_pad, y_test), use_multiprocessing=True, workers=8)
-        return train_model
+            embed_model = get_model(num_words, self.max_length, embedding_matrix)
+            embed_model.summary()
+            embed_model.fit(x_train_pad, y_train, batch_size=8, epochs=5, verbose=1,
+                            validation_data=(x_test_pad, y_test), use_multiprocessing=True, workers=-1)
+        return embed_model
 
 
 if __name__ == '__main__':
     sentiment_analysis = SentimentAnalysis()
-    model = sentiment_analysis.train()
+    model = sentiment_analysis.train
