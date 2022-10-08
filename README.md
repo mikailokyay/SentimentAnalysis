@@ -114,10 +114,11 @@ For train Turkish Sentiment Analysis model with ElMo
 LANG = "tr"
 EMBEDDING_MODEL = "elmo"
 ```
-For train Turkish Sentiment Analysis model with Bert
+For train Turkish Sentiment Analysis model with transformers
 ```python
 LANG = "en"
-EMBEDDING_MODEL = "bert"
+PRETRAINED_MODEL = "bert"
+PRETRAINED_MODEL_NAME = "bert-base-uncased"
 ```
 
 

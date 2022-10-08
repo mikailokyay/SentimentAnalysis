@@ -12,6 +12,7 @@ from sklearn.model_selection import train_test_split
 from src.sentiment_analysis.models import get_model, get_elmo_model, get_transformer_model
 from src.sentiment_analysis.embedding import get_embedding_matrix
 from src.sentiment_analysis.model_constants import get_data_path, EMBEDDING_MODEL, LANG
+from src.sentiment_analysis.model_constants import PRETRAINED_MODEL, PRETRAINED_MODEL_NAME
 from sklearn.metrics import accuracy_score
 
 
@@ -112,11 +113,11 @@ class SentimentAnalysis:
                             epochs=5,
                             batch_size=16,
                             validation_data=(x_test, y_test), use_multiprocessing=True, workers=8)
-        elif EMBEDDING_MODEL == "bert":
+        elif EMBEDDING_MODEL == "transformers":
 
             train_df, val_df = train_test_split(self.dataset, test_size=0.2, random_state=0)
-            embed_model = get_transformer_model("bert", "bert-base-uncased", set(self.sentiment))
-            embed_model.train_model(train_df, acc=accuracy_score)
+            embed_model = get_transformer_model(PRETRAINED_MODEL, PRETRAINED_MODEL_NAME, set(self.sentiment))
+            embed_model.train_model(train_df, val_df, acc=accuracy_score)
 
         else:
             num_words = len(self.word_index) + 1
@@ -132,3 +133,5 @@ class SentimentAnalysis:
 if __name__ == '__main__':
     sentiment_analysis = SentimentAnalysis()
     model = sentiment_analysis.train
+
+

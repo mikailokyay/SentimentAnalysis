@@ -2,10 +2,12 @@
 from tensorflow.python.keras.layers import CuDNNLSTM, CuDNNGRU
 
 LANG = "en"
-EMBEDDING_MODEL = "bert"
+EMBEDDING_MODEL = "transformers"
 RNN_LAYER_TYPE = "gru"
 MODEL_TYPE = "not_cnn_or_hybrid"
 BIDIRECTIONAL = True
+PRETRAINED_MODEL = "bert"
+PRETRAINED_MODEL_NAME = "bert-base-uncased"
 
 
 def get_embedding_constants():
